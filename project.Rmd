@@ -1,0 +1,120 @@
+---
+title: "139 project"
+author: "group"
+date: "Due: November 11, 2022"
+geometry: margin=2.45cm
+output: pdf_document
+---
+
+\newcommand{\noin}{\noindent}    
+\newcommand{\Var}{\text{Var}}    
+\newcommand{\Cov}{\text{Cov}}    
+
+
+```{r}
+set.seed(139)
+
+data <- read.csv('MERGED2018_19_PP.csv')
+```
+
+Baseline model
+```{r}
+library(dplyr)
+new_data <- data[data$DISTANCEONLY == 0, ]
+# new_data <- new_data[new_data$CURROPER == 1, ]
+
+columns <- c('MD_EARN_WNE_P6', 'HIGHDEG', 'REGION', 'UGDS_WHITE', 'UGDS_BLACK', 'UGDS_HISP', 'UGDS_ASIAN', 'UGDS_AIAN', 'UGDS_NHPI', 'C150_4', 'C150_L4', 'UGDS', 'UGDS_MEN', 'NPT4_PUB', 'NPT4_PRIV', 'PCIP04', 'PCIP05', 'PCIP09', 'PCIP11', 'PCIP12', 'PCIP14', 'PCIP23', 'PCIP26', 'PCIP27', 'PCIP38', 'PCIP42', 'PCIP45', 'PCIP50', 'PCIP51', 'PCIP52', 'PCIP54')
+
+new_data <- new_data[columns]
+
+
+new_data[new_data == ""] = NA
+new_data[new_data == "NULL"] = NA
+
+new_data$C150 <- coalesce(new_data$C150_4, new_data$C150_L4)
+new_data$NPT4 <- coalesce(new_data$NPT4_PUB, new_data$NPT4_PRIV)
+
+new_data = subset(new_data, select = -c(C150_4,C150_L4, NPT4_PUB, NPT4_PRIV))
+
+new_data <- na.omit(new_data)
+
+new_data <- sapply(new_data, as.numeric)
+new_data <- as.data.frame(new_data)
+new_data$HIGHDEG <- as.factor(new_data$HIGHDEG)
+new_data$REGION <- as.factor(new_data$REGION)
+
+prelim.model <- lm(MD_EARN_WNE_P6 ~ ., data=new_data)
+summary(prelim.model)
+```
+
+Baseline model (traditional colleges)
+```{r}
+trad.colleges <- data[data$DISTANCEONLY == 0, ]
+# new_data <- new_data[new_data$CURROPER == 1, ]
+
+columns <- c('MD_EARN_WNE_P6', 'HIGHDEG', 'REGION', 'UGDS_WHITE', 'UGDS_BLACK', 'UGDS_HISP', 'UGDS_ASIAN', 'UGDS_AIAN', 'UGDS_NHPI', 'C150_4', 'C150_L4', 'UGDS', 'UGDS_MEN', 'NPT4_PUB', 'NPT4_PRIV', 'PCIP04', 'PCIP05', 'PCIP09', 'PCIP11', 'PCIP12', 'PCIP14', 'PCIP23', 'PCIP26', 'PCIP27', 'PCIP38', 'PCIP42', 'PCIP45', 'PCIP50', 'PCIP51', 'PCIP52', 'PCIP54', 'ADM_RATE', 'SAT_AVG')
+
+trad.colleges <- trad.colleges[columns]
+
+
+trad.colleges[trad.colleges == ""] = NA
+trad.colleges[trad.colleges == "NULL"] = NA
+
+trad.colleges$C150 <- coalesce(trad.colleges$C150_4, trad.colleges$C150_L4)
+trad.colleges$NPT4 <- coalesce(trad.colleges$NPT4_PUB, trad.colleges$NPT4_PRIV)
+
+trad.colleges = subset(trad.colleges, select = -c(C150_4,C150_L4, NPT4_PUB, NPT4_PRIV))
+
+trad.colleges <- na.omit(trad.colleges)
+
+trad.colleges <- sapply(trad.colleges, as.numeric)
+trad.colleges <- as.data.frame(trad.colleges)
+trad.colleges$HIGHDEG <- as.factor(trad.colleges$HIGHDEG)
+trad.colleges$REGION <- as.factor(trad.colleges$REGION)
+
+prelim.model.trad <- lm(MD_EARN_WNE_P6 ~ ., data=trad.colleges)
+summary(prelim.model.trad)
+```
+
+EDA (Alice)
+```{r}
+new_data <- data[data$DISTANCEONLY == 0, ]
+alice_eda <- new_data[c('MD_EARN_WNE_P6', 'INSTNM', 'HIGHDEG', 'REGION', 'UGDS_WHITE', 'UGDS_BLACK', 'UGDS_HISP', 'UGDS_ASIAN', 'UGDS_AIAN', 'UGDS_NHPI', 'ADM_RATE')]
+
+# chart for checking if we can use the ADM_RATE variable
+
+holding <- alice_eda[alice_eda['MD_EARN_WNE_P6'] != 'NULL',]
+
+holding$MD_EARN_WNE_P6 <- as.numeric(holding$MD_EARN_WNE_P6)
+
+hist(holding[holding['ADM_RATE'] == 'NULL', ]$MD_EARN_WNE_P6)
+```
+```{r}
+response.naomit <- alice_eda[alice_eda['MD_EARN_WNE_P6'] != 'NULL',]
+
+response.naomit <- response.naomit[response.naomit['UGDS_WHITE'] != 'NULL',]
+
+response.naomit$UGDS_WHITE <- as.numeric(response.naomit$UGDS_WHITE)
+response.naomit$UGDS_BLACK <- as.numeric(response.naomit$UGDS_BLACK)
+response.naomit$UGDS_HISP <- as.numeric(response.naomit$UGDS_HISP)
+response.naomit$UGDS_ASIAN <- as.numeric(response.naomit$UGDS_ASIAN)
+response.naomit$UGDS_AIAN <- as.numeric(response.naomit$UGDS_AIAN)
+response.naomit$UGDS_NHPI <- as.numeric(response.naomit$UGDS_NHPI)
+response.naomit$MD_EARN_WNE_P6 <- as.numeric(response.naomit$UGDS_NHPI)
+
+boxplot(response.naomit[c('UGDS_WHITE', 'UGDS_BLACK', 'UGDS_HISP', 'UGDS_ASIAN', 'UGDS_AIAN', 'UGDS_NHPI')], las=2, names = c('White', 'Black', 'Hispanic', 'Asian', 'N. American', 'P. Islander'))
+par(cex.axis=0.5)
+```
+
+EDA (Charu)
+```{r}
+summary(new_data$C150)
+hist(new_data$C150)
+boxplot(data.frame(C150_4=new_data$C150_4, C150_L4=new_data$C150_L4))
+
+summary(new_data$UGDS)
+hist(new_data$UGDS)
+
+summary(new_data$SAT_AVG)
+hist(new_data$SAT_AVG)
+```
