@@ -1,0 +1,43 @@
+---
+title: "139 project"
+author: "group"
+date: "Due: November 11, 2022"
+geometry: margin=2.45cm
+output: pdf_document
+---
+
+\newcommand{\noin}{\noindent}    
+\newcommand{\Var}{\text{Var}}    
+\newcommand{\Cov}{\text{Cov}}    
+
+
+```{r}
+set.seed(139)
+
+data <- read.csv('MERGED2018_19_PP.csv')
+```
+
+```{r}
+new_data <- data[data$DISTANCEONLY == 0, ]
+# new_data <- new_data[new_data$CURROPER == 1, ]
+```
+
+```{r}
+columns <- c('PCIP04', 'PCIP05', 'PCIP09', 'PCIP11', 'PCIP12', 'PCIP14', 'PCIP23', 'PCIP26', 'PCIP27', 'PCIP38', 'PCIP42', 'PCIP45', 'PCIP50', 'PCIP51', 'PCIP52', 'PCIP54')
+new_data <- new_data[columns]
+new_data[new_data == ""] = NA
+new_data[new_data == "NULL"] = NA
+new_data <- na.omit(new_data)
+```
+
+```{r}
+new_data <- sapply(new_data, as.numeric)
+```
+
+```{r}
+par(mar=c(8,5,1,1))
+boxplot(new_data, ylab="Academic program percentage", names=c("architecture", "cultural studies", "communication", "computer science", "culinary/personal", "engineering", "English", "biology", "mathematics", "philosophy", "psychology", "social sciences", "performing arts", "health", "business", "history"), las=2)
+```
+
+
+
