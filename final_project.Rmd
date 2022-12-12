@@ -1,0 +1,60 @@
+---
+title: "Stat 139 Final Project"
+author: "Group"
+date: "December 14, 2022"
+geometry: margin=2.45cm
+output: pdf_document
+---
+
+
+```{r}
+library(tidyverse)
+set.seed(139)
+data <- read.csv('MERGED2018_19_PP.csv')
+data <- data[data$DISTANCEONLY == 0, ]
+```
+
+Data wrangling
+```{r}
+# "Traditional" universities - report both 'ADM_RATE' and 'SAT_AVG' 
+# "Non-traditional" universities - report one or neither of 'ADM_RATE' and 'SAT_AVG' 
+
+both_cols <- c('MD_EARN_WNE_P6', 'HIGHDEG', 'REGION', 'UGDS_WHITE', 'UGDS_BLACK', 'UGDS_HISP', 'UGDS_ASIAN', 'UGDS_AIAN', 'UGDS_NHPI', 'C150_4', 'C150_L4', 'UGDS', 'UGDS_MEN', 'NPT4_PUB', 'NPT4_PRIV', 'PCIP04', 'PCIP05', 'PCIP09', 'PCIP11', 'PCIP12', 'PCIP14', 'PCIP23', 'PCIP26', 'PCIP27', 'PCIP38', 'PCIP42', 'PCIP45', 'PCIP50', 'PCIP51', 'PCIP52', 'PCIP54')
+traditional_cols <- c('ADM_RATE', 'SAT_AVG')
+
+data <- data[c(both_cols, traditional_cols)]
+
+data$C150 <- coalesce(data$C150_4, data$C150_L4)
+data$NPT4 <- coalesce(data$NPT4_PUB, data$NPT4_PRIV)
+data <- subset(data, select = -c(C150_4,C150_L4, NPT4_PUB, NPT4_PRIV))
+
+data[data == ""] = NA
+data[data == "NULL"] = NA
+data <- as.data.frame(data)
+
+data <- data %>% tidyr::drop_na(c('MD_EARN_WNE_P6', 'HIGHDEG', 'REGION', 'UGDS_WHITE', 'UGDS_BLACK', 'UGDS_HISP', 'UGDS_ASIAN', 'UGDS_AIAN', 'UGDS_NHPI', 'C150', 'UGDS', 'UGDS_MEN', 'NPT4', 'PCIP04', 'PCIP05', 'PCIP09', 'PCIP11', 'PCIP12', 'PCIP14', 'PCIP23', 'PCIP26', 'PCIP27', 'PCIP38', 'PCIP42', 'PCIP45', 'PCIP50', 'PCIP51', 'PCIP52', 'PCIP54'))
+nrow(data)
+
+traditional <- data[!is.na(data$ADM_RATE) & !is.na(data$SAT_AVG), ]
+nrow(traditional)
+traditional <- sapply(traditional, as.numeric)
+traditional <- as.data.frame(traditional)
+
+nontraditional <- data[is.na(data$ADM_RATE) | is.na(data$SAT_AVG), ]
+nontraditional <- subset(nontraditional, select = -c(ADM_RATE, SAT_AVG))
+nrow(nontraditional)
+nontraditional <- sapply(nontraditional, as.numeric)
+nontraditional <- as.data.frame(nontraditional)
+
+
+traditional$HIGHDEG <-factor(traditional$HIGHDEG, levels=0:4, labels=c("Non-degree granting", "Certificate degree", "Associate degree", "Bachelor's degree", "Graduate degree"))
+traditional$REGION <- factor(traditional$REGION, levels=0:9, labels=c("U.S. Service Schools", "New England", "Mid East", "Great Lakes", "Plains", "Southeast", "Southwest", "Rocky Mountains", "Far West", "Outlying Areas"))
+
+nontraditional$HIGHDEG <-factor(nontraditional$HIGHDEG, levels=0:4, labels=c("Non-degree granting", "Certificate degree", "Associate degree", "Bachelor's degree", "Graduate degree"))
+nontraditional$REGION <- factor(nontraditional$REGION, levels=0:9, labels=c("U.S. Service Schools", "New England", "Mid East", "Great Lakes", "Plains", "Southeast", "Southwest", "Rocky Mountains", "Far West", "Outlying Areas"))
+```
+
+Lawrence
+```{r}
+
+```
