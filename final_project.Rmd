@@ -12,6 +12,7 @@ library(tidyverse)
 set.seed(139)
 data <- read.csv('MERGED2018_19_PP.csv')
 data <- data[data$DISTANCEONLY == 0, ]
+data <- as.data.frame(data)
 ```
 
 Data wrangling
@@ -22,17 +23,20 @@ Data wrangling
 both_cols <- c('MD_EARN_WNE_P6', 'HIGHDEG', 'REGION', 'UGDS_WHITE', 'UGDS_BLACK', 'UGDS_HISP', 'UGDS_ASIAN', 'UGDS_AIAN', 'UGDS_NHPI', 'C150_4', 'C150_L4', 'UGDS', 'UGDS_MEN', 'NPT4_PUB', 'NPT4_PRIV', 'PCIP04', 'PCIP05', 'PCIP09', 'PCIP11', 'PCIP12', 'PCIP14', 'PCIP23', 'PCIP26', 'PCIP27', 'PCIP38', 'PCIP42', 'PCIP45', 'PCIP50', 'PCIP51', 'PCIP52', 'PCIP54')
 traditional_cols <- c('ADM_RATE', 'SAT_AVG')
 
-data <- data[c(both_cols, traditional_cols)]
-
+data <- data[, c(both_cols, traditional_cols)]
+data[data == ""] = NA
+data[data == "NULL"] = NA
 data$C150 <- coalesce(data$C150_4, data$C150_L4)
 data$NPT4 <- coalesce(data$NPT4_PUB, data$NPT4_PRIV)
 data <- subset(data, select = -c(C150_4,C150_L4, NPT4_PUB, NPT4_PRIV))
-
-data[data == ""] = NA
-data[data == "NULL"] = NA
 data <- as.data.frame(data)
 
-data <- data %>% tidyr::drop_na(c('MD_EARN_WNE_P6', 'HIGHDEG', 'REGION', 'UGDS_WHITE', 'UGDS_BLACK', 'UGDS_HISP', 'UGDS_ASIAN', 'UGDS_AIAN', 'UGDS_NHPI', 'C150', 'UGDS', 'UGDS_MEN', 'NPT4', 'PCIP04', 'PCIP05', 'PCIP09', 'PCIP11', 'PCIP12', 'PCIP14', 'PCIP23', 'PCIP26', 'PCIP27', 'PCIP38', 'PCIP42', 'PCIP45', 'PCIP50', 'PCIP51', 'PCIP52', 'PCIP54'))
+completeFun <- function(data, desiredCols) {
+  completeVec <- complete.cases(data[, desiredCols])
+  return(data[completeVec, ])
+}
+
+data <- completeFun(data, c('MD_EARN_WNE_P6', 'HIGHDEG', 'REGION', 'UGDS_WHITE', 'UGDS_BLACK', 'UGDS_HISP', 'UGDS_ASIAN', 'UGDS_AIAN', 'UGDS_NHPI', 'C150', 'UGDS', 'UGDS_MEN', 'NPT4', 'PCIP04', 'PCIP05', 'PCIP09', 'PCIP11', 'PCIP12', 'PCIP14', 'PCIP23', 'PCIP26', 'PCIP27', 'PCIP38', 'PCIP42', 'PCIP45', 'PCIP50', 'PCIP51', 'PCIP52', 'PCIP54'))
 nrow(data)
 
 traditional <- data[!is.na(data$ADM_RATE) & !is.na(data$SAT_AVG), ]
@@ -52,6 +56,12 @@ traditional$REGION <- factor(traditional$REGION, levels=0:9, labels=c("U.S. Serv
 
 nontraditional$HIGHDEG <-factor(nontraditional$HIGHDEG, levels=0:4, labels=c("Non-degree granting", "Certificate degree", "Associate degree", "Bachelor's degree", "Graduate degree"))
 nontraditional$REGION <- factor(nontraditional$REGION, levels=0:9, labels=c("U.S. Service Schools", "New England", "Mid East", "Great Lakes", "Plains", "Southeast", "Southwest", "Rocky Mountains", "Far West", "Outlying Areas"))
+
+data <- subset(data, select = -c(ADM_RATE, SAT_AVG))
+
+# data: all universities, no SAT/ADM_RATE predictors
+# traditional: traditional universities, including SAT/ADM_RATE predictors
+# non-traditional: non-traditional universities, no SAT/ADM_RATE predictors 
 ```
 
 Lawrence
