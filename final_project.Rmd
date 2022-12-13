@@ -4,8 +4,8 @@ author: "Group"
 date: "December 14, 2022"
 geometry: margin=2.45cm
 output: pdf_document
----
 
+---
 
 ```{r}
 library(tidyverse)
@@ -68,3 +68,43 @@ Lawrence
 ```{r}
 
 ```
+
+Charu
+```{r}
+library(xtable)
+# transform proportions to percentages
+traditional$UGDS_ASIAN <- traditional$UGDS_ASIAN * 100
+traditional$PCIP11 <- traditional$PCIP11 * 100
+traditional$PCIP14 <- traditional$PCIP14 * 100
+traditional$PCIP27 <- traditional$PCIP27 * 100
+traditional$PCIP26 <- traditional$PCIP26 * 100
+
+# Asian percent as predictor
+lm.asian <- lm(log(MD_EARN_WNE_P6) ~ UGDS_ASIAN, data=traditional)
+summary(lm.asian)
+xtable(summary(lm.asian))
+# Verification of assumptions
+plot(log(MD_EARN_WNE_P6) ~ UGDS_ASIAN, data=traditional)
+plot(lm.asian$residuals ~ lm.asian$fitted.values)
+qqnorm(lm.asian$residuals)
+qqline(lm.asian$residuals)
+
+# Asian percent and STEM majors as predictors
+lm.asian.stem <- lm(log(MD_EARN_WNE_P6) ~ UGDS_ASIAN + PCIP11 + PCIP14 + PCIP27 + PCIP26, data=traditional)
+summary(lm.asian.stem)
+xtable(summary(lm.asian.stem))
+# Verification of assumptions
+plot(lm.asian.stem$residuals ~ lm.asian.stem$fitted.values)
+qqnorm(lm.asian.stem$residuals)
+qqline(lm.asian.stem$residuals)
+
+# STEM majors as predictors
+lm.stem <- lm(log(MD_EARN_WNE_P6) ~ PCIP11 + PCIP14 + PCIP27 + PCIP26, data=traditional)
+summary(lm.stem)
+xtable(summary(lm.stem))
+# Verification of assumptions
+plot(lm.stem$residuals ~ lm.stem$fitted.values)
+qqnorm(lm.stem$residuals)
+qqline(lm.stem$residuals)
+```
+
