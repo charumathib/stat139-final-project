@@ -126,7 +126,7 @@ head(traditional.train)
 
 library(lme4)
 
-lmer1 <- lmer(log(MD_EARN_WNE_P6) ~ traditional.train$max_degree + (1|traditional.train$REGION), data=traditional.train)
+lmer1 <- lmer(log(MD_EARN_WNE_P6) ~ max_degree + (1 | REGION), data=traditional.train)
 
 library(car)
 Anova(lmer1,type="II",test.statistic="Chisq")
