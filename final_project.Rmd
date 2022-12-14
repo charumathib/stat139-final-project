@@ -110,19 +110,19 @@ qqline(lm.stem$residuals)
 
 Nishant
 ```{r}
-set.seed(139)
+set.seed(140)
 n = nrow(traditional)
-
 
 degree_prop<-traditional[,c("PCIP04", "PCIP05", "PCIP09", "PCIP11", "PCIP12", "PCIP14", "PCIP23", "PCIP26", "PCIP27", "PCIP38", "PCIP42", "PCIP45", "PCIP50", "PCIP51", "PCIP52", "PCIP54")]
 
 degree_prop$max_degree <- names(degree_prop)[-1][max.col(degree_prop[-1])]
 traditional$max_degree <- degree_prop$max_degree
 
-rows.train = sample(n, 1080)
+rows.train = sample(n, 1000)
 traditional.train=traditional[rows.train,]
 traditional.test=traditional[-rows.train,]
 
+nrow(traditional)
 
 lm0 = lm(log(MD_EARN_WNE_P6) ~ REGION, data=traditional.train)
 lm1 = lm(log(MD_EARN_WNE_P6) ~ max_degree, data=traditional.train)
