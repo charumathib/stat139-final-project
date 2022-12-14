@@ -147,3 +147,14 @@ for (i in nodes) {
 varImpPlot(rf1,cex=0.55)
 
 ```
+sequential selection model(s)
+```{r}
+trivial.model <- lm(MD_EARN_WNE_P6~1,data=traditional)
+forward.model <- step(trivial.model, scope = list(lower = formula(trivial.model), upper = formula(full.lm)), direction = "forward")
+backward.model <- step(full.lm, scope = list(lower = formula(trivial.model), upper = formula(full.lm)), direction = "backward")
+```
+
+```{r}
+summary(forward.model)
+summary(backward.model)
+```
