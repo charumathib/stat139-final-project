@@ -108,3 +108,47 @@ qqnorm(lm.stem$residuals)
 qqline(lm.stem$residuals)
 ```
 
+Nishant
+```{r}
+set.seed(139)
+n = nrow(traditional)
+
+
+degree_prop<-traditional[,c("PCIP04", "PCIP05", "PCIP09", "PCIP11", "PCIP12", "PCIP14", "PCIP23", "PCIP26", "PCIP27", "PCIP38", "PCIP42", "PCIP45", "PCIP50", "PCIP51", "PCIP52", "PCIP54")]
+
+degree_prop$max_degree <- names(degree_prop)[-1][max.col(degree_prop[-1])]
+traditional$max_degree <- degree_prop$max_degree
+
+rows.train = sample(n, 1080)
+traditional.train=traditional[rows.train,]
+traditional.test=traditional[-rows.train,]
+
+
+lm0 = lm(log(MD_EARN_WNE_P6) ~ REGION, data=traditional.train)
+lm1 = lm(log(MD_EARN_WNE_P6) ~ max_degree, data=traditional.train)
+coef(lm1)
+
+library(lme4)
+lmer1 = lmer(log(MD_EARN_WNE_P6)~1+max_degree+(1|REGION),data=traditional.train)
+summary(lmer1)
+
+MSE = function(y,yhat){
+  SSE = sum((y-yhat)^2)
+  return(SSE/length(y))
+}
+
+yhat.lm1.train = predict(lm1,newdata = traditional.train)
+yhat.lmer1.train = predict(lmer1,newdata = traditional.train)
+
+unique(traditional.train$max_degree)
+unique(traditional.test$max_degree)
+
+MSE(log(traditional.train$MD_EARN_WNE_P6), yhat.lm1.train)
+MSE(log(traditional.train$MD_EARN_WNE_P6), yhat.lmer1.train)
+
+yhat.lm1.test = predict(lm1, newdata = traditional.test)
+yhat.lmer1.test = predict(lmer1, newdata = traditional.test)
+
+MSE(log(traditional.test$MD_EARN_WNE_P6),yhat.lm1.test)
+MSE(log(traditional.test$MD_EARN_WNE_P6),yhat.lmer1.test)
+```
