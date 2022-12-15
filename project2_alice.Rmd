@@ -62,6 +62,7 @@ RMSE = function(y,yhat){
 }
 ```
 
+finished, do not run again!
 ```{r}
 traditional$MD_EARN_WNE_P6 <- log(traditional$MD_EARN_WNE_P)
 ```
@@ -85,25 +86,35 @@ tunedRidge = glmnet(X,traditional$MD_EARN_WNE_P6, alpha=0, lambda = ridges$lambd
 
 tunedRidge$beta
 
-plot(ridges)
+plot(ridges, main='Ridge model')
 
 sumar <- tunedRidge$beta
 names <- sumar@Dimnames[[1]]
 coefs <- sumar@x
 
 cbind.data.frame(names, coefs)[order(abs(coefs), decreasing = TRUE),]
+
+ridges = glmnet(X,traditional$MD_EARN_WNE_P6, alpha = 0,nlambda=100)
+matplot(log(ridges$lambda),t(ridges$beta),type="l",col="gray33",lwd=1,
+        xlab=expression(log(lambda)),ylab=expression(hat(beta)), main='Ridge model')
+abline(h=0)
 ```
 Lasso
 ```{r}
 lassos = cv.glmnet(X,traditional$MD_EARN_WNE_P6,alpha=1,nfolds=10,lambda=2^(seq(-20,20,0.1)))
 tunedLasso = glmnet(X,traditional$MD_EARN_WNE_P6, alpha=1, lambda = lassos$lambda.min)
-plot(lassos)
+plot(lassos, main='Lasso model')
 
 tunedLasso$beta
 
 df_test <- as.data.frame(as.matrix(tunedLasso$beta))
 
 cbind.data.frame(names, df_test$s0)[order(abs(df_test$s0), decreasing = TRUE),]
+
+lassos = glmnet(X,traditional$MD_EARN_WNE_P6, alpha = 1,nlambda=100)
+matplot(log(lassos$lambda),t(lassos$beta),type="l",col="gray33",lwd=1,
+        xlab=expression(log(lambda)),ylab=expression(hat(beta)), main='Lasso model', label=TRUE)
+abline(h=0)
 
 # sumar <- tunedLasso$beta
 # names <- c()
@@ -147,6 +158,7 @@ for (i in nodes) {
 varImpPlot(rf1,cex=0.55)
 
 ```
+
 sequential selection model(s)
 ```{r}
 trivial.model <- lm(MD_EARN_WNE_P6~1,data=traditional)
@@ -157,4 +169,176 @@ backward.model <- step(full.lm, scope = list(lower = formula(trivial.model), upp
 ```{r}
 summary(forward.model)
 summary(backward.model)
+```
+
+anova for race and degrees categories
+```{r}
+traditional$REGION <- as.factor(traditional$REGION)
+
+summary(aov(MD_EARN_WNE_P6 ~ REGION, data=traditional))
+```
+
+nish's modeling stuff
+
+```{r}
+set.seed(140)
+n = nrow(traditional)
+
+degree_prop<-traditional[,c("PCIP04", "PCIP05", "PCIP09", "PCIP11", "PCIP12", "PCIP14", "PCIP23", "PCIP26", "PCIP27", "PCIP38", "PCIP42", "PCIP45", "PCIP50", "PCIP51", "PCIP52", "PCIP54")]
+
+degree_prop$max_degree <- names(degree_prop)[-1][max.col(degree_prop[-1])]
+traditional$max_degree <- degree_prop$max_degree
+
+rows.train = sample(n, 1000)
+traditional.train=traditional[rows.train,]
+traditional.test=traditional[-rows.train,]
+
+head(traditional.train)
+
+library(lme4)
+
+lmer1 <- lmer(log(MD_EARN_WNE_P6) ~ max_degree + (1 | REGION), data=traditional.train)
+
+library(car)
+Anova(lmer1,type="II",test.statistic="Chisq")
+
+library(lmerTest)
+m.test <- as(lmer1,"merModLmerTest")
+print(summary(m.test,ddf="Satterthwaite"),correlation=FALSE)
+
+lm3.2 <- lm(log(MD_EARN_WNE_P6)~max_degree + REGION,data=traditional.train)
+
+yhat.lm3.2.train = predict(lm3.2,newdata = traditional.train)
+yhat.lmer1.train = predict(lmer1,newdata = traditional.train)
+
+RMSE(log(traditional.train$MD_EARN_WNE_P6), yhat.lm3.2.train)
+RMSE(log(traditional.train$MD_EARN_WNE_P6), yhat.lmer1.train)
+
+yhat.lm3.2.test = predict(lm3.2, newdata = traditional.test)
+yhat.lmer1.test = predict(lmer1, newdata = traditional.test)
+
+RMSE(log(traditional.test$MD_EARN_WNE_P6),yhat.lm3.2.test)
+RMSE(log(traditional.test$MD_EARN_WNE_P6),yhat.lmer1.test)
+```
+
+Alice
+```{r}
+RMSE = function(y,yhat){
+  MSE = mean((y-yhat)^2)
+  return(sqrt(MSE))
+}
+```
+
+```{r}
+set.seed(140)
+n = nrow(traditional)
+
+rows.train = sample(n, 1000)
+traditional.train=traditional[rows.train,]
+traditional.test=traditional[-rows.train,]
+```
+
+baseline linear for reference
+```{r}
+full.lm <- lm(MD_EARN_WNE_P6 ~ ., data = traditional)
+full.interaction <- lm(MD_EARN_WNE_P6 ~ .^2, data = traditional)
+
+yhat.full.train = predict(full.interaction, newdata = traditional.train)
+RMSE(traditional.train$MD_EARN_WNE_P6, yhat.full.train)
+
+yhat.full.test = predict(full.interaction, newdata = traditional.test)
+RMSE(traditional.test$MD_EARN_WNE_P6,yhat.full.test)
+```
+```{r}
+library(glmnet)
+```
+
+Ridge
+```{r}
+X = model.matrix(full.lm)[,-1]
+X <- scale(X)
+ridges = cv.glmnet(X,traditional$MD_EARN_WNE_P6,alpha=0,nfolds=5,lambda=2^(seq(-20,20,0.1)))
+tunedRidge = glmnet(X,traditional$MD_EARN_WNE_P6, alpha=0, lambda = ridges$lambda.min)
+tunedRidge$beta
+plot(ridges)
+sumar <- tunedRidge$beta
+names <- sumar@Dimnames[[1]]
+coefs <- sumar@x
+cbind.data.frame(names, coefs)[order(abs(coefs), decreasing = TRUE),]
+
+yhat.tunedRidge.train = predict(tunedRidge, X, newdata = traditional.train)
+MSE(traditional.train$MD_EARN_WNE_P6, yhat.tunedRidge.train)
+
+yhat.tunedRidge.test = predict(tunedRidge, X, newdata = traditional.test)
+MSE(traditional.test$MD_EARN_WNE_P6,yhat.tunedRidge.test)
+```
+Lasso
+```{r}
+lassos = cv.glmnet(X,traditional$MD_EARN_WNE_P6,alpha=1,nfolds=10,lambda=2^(seq(-20,20,0.1)))
+tunedLasso = glmnet(X,traditional$MD_EARN_WNE_P6, alpha=1, lambda = lassos$lambda.min)
+plot(lassos)
+tunedLasso$beta
+df_test <- as.data.frame(as.matrix(tunedLasso$beta))
+cbind.data.frame(names, df_test$s0)[order(abs(df_test$s0), decreasing = TRUE),]
+
+yhat.tunedLasso.train = predict(tunedLasso, X, newdata = traditional.train)
+MSE(traditional.train$MD_EARN_WNE_P6, yhat.tunedLasso.train)
+
+yhat.tunedLasso.test = predict(tunedLasso, X, newdata = traditional.test)
+MSE(traditional.test$MD_EARN_WNE_P6,yhat.tunedLasso.test)
+```
+
+Pruned tree
+```{r}
+library(rpart)
+library(randomForest)
+library(rpart.plot)
+tree.all=rpart(MD_EARN_WNE_P6 ~ ., data=traditional, control = list(minsplit=1,cp=0,maxdepth=20))
+tree1 = prune(tree.all, cp=tree.all$cptable[,"CP"][which.min(tree.all$cptable[,"xerror"])])
+barplot(tree1$variable.importance,horiz=T, las=2,cex.names=0.55)
+```
+Tuned random forest
+```{r}
+mtrys = c(1,2,3,4)
+nodes = c(10,25,50,100,200)
+rmse = Inf
+for (i in nodes) {
+  for (k in mtrys) {
+    curr = randomForest(MD_EARN_WNE_P6~.,data=traditional,maxnodes=i, mtry=k, ntree=200)
+    curr_rmse = RMSE(traditional$MD_EARN_WNE_P6,curr$predicted)
+    if (curr_rmse < rmse) {
+      rf1 = curr
+      rmse = curr_rmse
+    }
+  }
+}
+varImpPlot(rf1,cex=0.55)
+
+
+yhat.rf.train = predict(curr,newdata = traditional.train)
+MSE(traditional.train$MD_EARN_WNE_P6, yhat.rf.train)
+
+
+yhat.rf.test = predict(curr, newdata = traditional.test)
+MSE(traditional.test$MD_EARN_WNE_P6,yhat.rf.test)
+```
+
+
+```{r}
+library(caret)
+
+ctrl <- trainControl(method = "cv", number = 5)
+
+# full lm
+cv.full.lm <- train(MD_EARN_WNE_P6 ~ .^2, data = traditional, method = "lm", trControl = ctrl)
+print(cv.full.lm)
+
+cv.lm3.2 <- train(MD_EARN_WNE_P6~max_degree + REGION, method = "lm", data=traditional)
+print(cv.lm3.2)
+
+# ridge
+
+
+
+# lasso
 ```
